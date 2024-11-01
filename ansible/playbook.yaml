@@ -1,6 +1,6 @@
 # Set's IP in range 192.168.5
 # Add dns if necessary to access internet
-# Install Docker
+# Install Containerd
 ---
 - name: Initialization
   hosts: k8s_cluster01
@@ -11,3 +11,29 @@
         name: "*"
         state: latest
         update_cache: yes
+    - name: Install required packages
+      dnf:
+        name: "{{ item }}"
+        state: latest
+      with_items:
+        - yum-utils
+    - name: Add Docker repo
+      shell: yum-config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+      args:
+        creates: /etc/yum.repos.d/docker-ce.repo 
+    - name: Install Containerd
+      dnf:
+        name: containerd.io
+        state: latest
+    - name: Start Docker service
+      service:
+        name: containerd
+        state: started
+        enabled: yes
+
+#  rescue:
+#    - name: Remove repository (and clean up left-over metadata)
+#      ansible.builtin.yum_repository:
+#        name: docker-ce
+#        state: absent
+#      notify: yum-clean-metadata
