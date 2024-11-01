@@ -2,3 +2,13 @@
 plugin: amazon.aws.aws_ec2
 regions:
   - eu-west-1
+filters:
+  tag:Project:
+    - cluster01
+keyed_groups:
+  - key: tags['Project']
+    prefix: k8s
+  - key: tags['Role']
+  - key: tags['Environment']
+    prefix: env
+  

@@ -1,16 +1,17 @@
 #!/bin/bash
 
-echo "Provisioning VMs  on aws using terraform:"
+# Global Variables
 
-terraform -chdir="./terraform" init
+HOME_DIR=$(dirname "$(realpath "$0")")
 
-terraform -chdir="./terraform" apply -auto-approve
+# Launch Terraform
 
-echo "Saving Public IP addresses in cluster-ip-list file"
+$HOME_DIR/terraform/terraform.sh
 
-terraform -chdir="./terraform" output > cluster-ip-list
+# Securing myKey.pem
 
-echo "Securing myKey.pem"
+chmod 400 $HOME_DIR/ansible/myKey.pem
 
-chmod 400 terraform/myKey.pem
+# Launch Ansible
 
+$HOME_DIR/ansible/ansible.sh

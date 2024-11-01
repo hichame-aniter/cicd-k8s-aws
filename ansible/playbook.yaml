@@ -1,0 +1,13 @@
+# Set's IP in range 192.168.5
+# Add dns if necessary to access internet
+# Install Docker
+---
+- name: Initialization
+  hosts: k8s_cluster01
+  become: yes
+  tasks:
+    - name: Updates all paquets
+      dnf:
+        name: "*"
+        state: latest
+        update_cache: yes

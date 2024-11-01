@@ -1,12 +1,12 @@
 #!/bin/bash
 
-echo "Deleting VMs on aws using terraform:"
+# Global Variables
 
-terraform -chdir="./terraform" init
+HOME_DIR=$(dirname "$(realpath "$0")")
 
-terraform -chdir="./terraform" destroy -auto-approve
+#Deleting VMs on aws using terraform
 
-echo "Remove cluster-ip-list file"
+terraform -chdir="$HOME_DIR/terraform/" init
 
-rm cluster-ip-list
+terraform -chdir="$HOME_DIR/terraform/" destroy
 

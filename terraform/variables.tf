@@ -7,3 +7,9 @@ variable "instance_type" {
 variable "instances_state" {
     type = string  
 }
+variable "project" {
+    type = string  
+}
+variable "environment" {
+    type = string  
+}
