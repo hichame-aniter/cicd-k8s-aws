@@ -24,11 +24,11 @@ resource "aws_instance" "controlplane01" {
 	instance_type = var.instance_type
 	key_name = aws_key_pair.kp.key_name
 	tags = {
-    	Name = "controlplane01" #var.instance_name
-      #cluster=k8s_cluster_01
+    	Name = "kubernetes-ha-controlplane01" #var.instance_name      
       Project = var.project
       Environment = var.environment
       Role = "Master"
+      
   	}
 }
 resource "aws_ec2_instance_state" "controlplane01" {

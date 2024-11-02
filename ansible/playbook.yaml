@@ -1,6 +1,8 @@
 # Set's IP in range 192.168.5
 # Add dns if necessary to access internet
 # Install Containerd
+# ip = 192.168.56.11
+# ARCH="$(uname -m)"
 ---
 - name: Initialization
   hosts: k8s_cluster01
