@@ -74,6 +74,34 @@ resource "aws_internet_gateway" "cluster01_igw" {
    Name = "cluster01_igw"
  }
 }
+# Create Subnets
+# - Private Subnets
+resource "aws_subnet" "cluster01_private_subnets" {
+  vpc_id = aws_vpc.cluster01_vpc.id
+  count = length(var.private_subnet_cidrs)
+  cidr_block = element(var.private_subnet_cidrs, count.index)
+  availability_zone = element(var.availability_zones, count.index)
+  tags = {
+    Name = "cluster01_private_subnet_${count.index + 1}"
+    Terraform = "true"
+    Project = var.project
+    Environment = var.environment
+  }
+}
+# - Public Subnets
+resource "aws_subnet" "cluster01_public_subnets" {
+  vpc_id = aws_vpc.cluster01_vpc.id
+  count = length(var.public_subnet_cidrs)
+  cidr_block = element(var.public_subnet_cidrs, count.index)
+  availability_zone = element(var.availability_zones, count.index)
+  map_public_ip_on_launch = true
+  tags = {
+    Name = "cluster01_public_subnet_${count.index + 1}"
+    Terraform = "true"
+    Project = var.project
+    Environment = var.environment
+  }
+}
 # Create Public Route table
 resource "aws_route_table" "cluster01_public_rtb" {
   vpc_id = aws_vpc.cluster01_vpc.id
@@ -92,7 +120,14 @@ resource "aws_route_table" "cluster01_public_rtb" {
     Environment = var.environment
   }
 }
+# - Associate RTB with Public VPC Subnet
+resource "aws_route_table_association" "public_subnet_asso" {
+ count = length(var.public_subnet_cidrs)
+ subnet_id = element(aws_subnet.cluster01_public_subnets[*].id, count.index)
+ route_table_id = aws_route_table.cluster01_public_rtb.id
+}
 # Create Private Route table
+/*
 resource "aws_route_table" "cluster01_private_rtb" {
   vpc_id = aws_vpc.cluster01_vpc.id
   route {
@@ -106,50 +141,18 @@ resource "aws_route_table" "cluster01_private_rtb" {
     Environment = var.environment
   }
 }
-# Create Subnets
-# - Private Subnets
-resource "aws_subnet" "cluster01_private_subnets" {
-  vpc_id = aws_vpc.cluster01_vpc.id
-  count = length(var.private_subnet_cidrs)
-  cidr_block = element(var.private_subnet_cidrs, count.index)
-  availability_zone = element(var.availability_zones, count.index)
-  tags = {
-    Name = "cluster01_private_subnet_${count.index + 1}"
-    Terraform = "true"
-    Project = var.project
-    Environment = var.environment
-  }
-}
-# --- Associate RTB with Private VPC Subnet
+# - Associate RTB with Private VPC Subnet
 resource "aws_route_table_association" "private_subnet_asso" {
  count = length(var.private_subnet_cidrs)
  subnet_id = element(aws_subnet.cluster01_private_subnets[*].id, count.index)
  route_table_id = aws_route_table.cluster01_private_rtb.id
 }
-# - Public Subnets
-resource "aws_subnet" "cluster01_public_subnets" {
-  vpc_id = aws_vpc.cluster01_vpc.id
-  count = length(var.public_subnet_cidrs)
-  cidr_block = element(var.public_subnet_cidrs, count.index)
-  availability_zone = element(var.availability_zones, count.index)
-  map_public_ip_on_launch = true
-  tags = {
-    Name = "cluster01_public_subnet_${count.index + 1}"
-    Terraform = "true"
-    Project = var.project
-    Environment = var.environment
-  }
-}
-# --- Associate RTB with Public VPC Subnet
-resource "aws_route_table_association" "public_subnet_asso" {
- count = length(var.public_subnet_cidrs)
- subnet_id = element(aws_subnet.cluster01_public_subnets[*].id, count.index)
- route_table_id = aws_route_table.cluster01_public_rtb.id
-}
+*/
 # Get Bastion Public IP
 data "http" "myip" {
   url = "https://ipv4.icanhazip.com"
 }
+# Manage default Security Group
 resource "aws_default_security_group" "cluster01_default_sg" {
   vpc_id = aws_vpc.cluster01_vpc.id
 
@@ -182,14 +185,16 @@ resource "aws_default_security_group" "cluster01_default_sg" {
 }
 
 # Create EC2 Instances
-resource "aws_instance" "controlplane01" {
+## Masters
+resource "aws_instance" "cluster01_controlplanes" {
 	ami = var.ami
 	instance_type = var.instance_type
 	key_name = aws_key_pair.kp.key_name
-  subnet_id = aws_subnet.cluster01_public_subnets[0].id #.id
-  private_ip = "192.168.56.11"
+  subnet_id = aws_subnet.cluster01_public_subnets[0].id
+  count = length(var.controlplane_list)
+  private_ip = element(var.controlplane_list, count.index)
 	tags = {
-    	Name = "kubernetes-ha-controlplane01" #var.instance_name      
+    	Name = "kubernetes-ha-controlplane0${count.index + 1}" #var.master_names      
       Project = var.project
       Environment = var.environment
       Role = "Master"
@@ -197,7 +202,30 @@ resource "aws_instance" "controlplane01" {
   	}
 }
 # Turn off/on instances
-resource "aws_ec2_instance_state" "controlplane01" {
-  instance_id = aws_instance.controlplane01.id
+resource "aws_ec2_instance_state" "cluster01_controlplanes" {
+  count = length(aws_instance.cluster01_controlplanes)
+  instance_id = element(aws_instance.cluster01_controlplanes[*].id, count.index)
+  state = var.instances_state
+}
+## Worker
+resource "aws_instance" "cluster01_nodes" {
+	ami = var.ami
+	instance_type = var.instance_type
+	key_name = aws_key_pair.kp.key_name
+  subnet_id = aws_subnet.cluster01_public_subnets[0].id
+  count = length(var.node_list)
+  private_ip = element(var.node_list, count.index)
+	tags = {
+    	Name = "kubernetes-ha-node0${count.index + 1}" 
+      Project = var.project
+      Environment = var.environment
+      Role = "Worker"
+      Terraform = "true"
+  	}
+}
+# Turn off/on instances
+resource "aws_ec2_instance_state" "cluster01_nodes" {
+  count = length(aws_instance.cluster01_nodes)
+  instance_id = element(aws_instance.cluster01_nodes[*].id, count.index)
   state = var.instances_state
 }

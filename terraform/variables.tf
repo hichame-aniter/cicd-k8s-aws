@@ -8,6 +8,10 @@ variable "environment" {
 }
 
 # EC2
+variable "controlplane_list" {
+}
+variable "node_list" {
+}
 variable "ami" {
     description = "OS Image"
     type = string
