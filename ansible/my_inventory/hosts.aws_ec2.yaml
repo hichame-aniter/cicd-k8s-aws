@@ -5,10 +5,10 @@ regions:
 filters:
   tag:Project:
     - cluster01
+  tag:Environment:
+    - dev
 keyed_groups:
   - key: tags['Project']
     prefix: k8s
   - key: tags['Role']
-  - key: tags['Environment']
-    prefix: env
   

@@ -1,6 +1,4 @@
-# Set's IP in range 192.168.5
 # Add dns if necessary to access internet
-# Install Containerd
 # ip = 192.168.56.11
 # ARCH="$(uname -m)"
 ---
@@ -27,11 +25,21 @@
       dnf:
         name: containerd.io
         state: latest
-    - name: Start Docker service
+    - name: Start Containerd service
       service:
         name: containerd
         state: started
         enabled: yes
+    - name: Update the /etc/hosts file with node name
+      lineinfile:
+        dest: "/etc/hosts"
+        regexp: ".*\t{{ hostvars[item].tags.Name.split('-')[-1]}}\t{{ hostvars[item].tags.Name.split('-')[-1]}}"
+        line: "{{ hostvars[item]['ansible_default_ipv4']['address'] }}\t{{ hostvars[item].tags.Name.split('-')[-1]}}\t{{ hostvars[item].tags.Name.split('-')[-1]}}"
+        state: present
+        backup: yes
+      with_items: "{{groups['k8s_cluster01']}}"
+    
+        
 
 #  rescue:
 #    - name: Remove repository (and clean up left-over metadata)
