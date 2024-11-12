@@ -4,7 +4,8 @@ environment = "dev"
 
 # EC2
 controlplane_list = ["192.168.56.11", "192.168.56.12"]
-node_list = ["192.168.56.21"]
+node_list = ["192.168.56.21", "192.168.56.22"]
+loadbalancer_ip = "192.168.56.30"
 
 ami = "ami-07d4917b6f95f5c2a" #RHEL 9
 instance_type = "t2.micro"

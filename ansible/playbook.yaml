@@ -1,6 +1,3 @@
-# Add dns if necessary to access internet
-# ip = 192.168.56.11
-# ARCH="$(uname -m)"
 ---
 - name: Initialization
   hosts: k8s_cluster01
@@ -11,6 +8,19 @@
         name: "*"
         state: latest
         update_cache: yes
+    - name: Update the /etc/hosts file with node name
+      lineinfile:
+        dest: "/etc/hosts"
+        regexp: ".*\t{{ hostvars[item].tags.Name.split('-')[-1]}}\t{{ hostvars[item].tags.Name.split('-')[-1]}}"
+        line: "{{ hostvars[item]['ansible_default_ipv4']['address'] }}\t{{ hostvars[item].tags.Name.split('-')[-1]}}\t{{ hostvars[item].tags.Name.split('-')[-1]}}"
+        state: present
+        backup: yes
+      with_items: "{{groups['k8s_cluster01']}}"
+
+- name: Configuration
+  hosts: _Master, _Worker
+  become: yes
+  tasks:
     - name: Install required packages
       dnf:
         name: "{{ item }}"
@@ -30,16 +40,46 @@
         name: containerd
         state: started
         enabled: yes
-    - name: Update the /etc/hosts file with node name
-      lineinfile:
-        dest: "/etc/hosts"
-        regexp: ".*\t{{ hostvars[item].tags.Name.split('-')[-1]}}\t{{ hostvars[item].tags.Name.split('-')[-1]}}"
-        line: "{{ hostvars[item]['ansible_default_ipv4']['address'] }}\t{{ hostvars[item].tags.Name.split('-')[-1]}}\t{{ hostvars[item].tags.Name.split('-')[-1]}}"
-        state: present
-        backup: yes
-      with_items: "{{groups['k8s_cluster01']}}"
-    
-        
+    - name: Create PKI directory
+      file:
+        path: /var/lib/kubernetes/pki/
+        state: directory
+    - name: Copy Certificates to Master nodes
+      copy:
+        src: "{{ item }}"
+        dest: "/var/lib/kubernetes/pki/"
+      loop:
+        - ../kubernetes/certificates/ca.crt                         
+        - ../kubernetes/certificates/ca.key
+        - ../kubernetes/certificates/etcd-ca.crt                   
+        - ../kubernetes/certificates/etcd-ca.key                   
+        - ../kubernetes/certificates/kube-apiserver.crt
+        - ../kubernetes/certificates/kube-apiserver.key
+        - ../kubernetes/certificates/apiserver-kubelet-client.crt  
+        - ../kubernetes/certificates/apiserver-kubelet-client.key  
+        - ../kubernetes/certificates/kube-controller-manager.crt
+        - ../kubernetes/certificates/kube-controller-manager.key
+        - ../kubernetes/certificates/kube-scheduler.crt
+        - ../kubernetes/certificates/kube-scheduler.key
+        - ../kubernetes/certificates/etcd-server.crt
+        - ../kubernetes/certificates/etcd-server.key                  
+        - ../kubernetes/certificates/kube-proxy.crt
+        - ../kubernetes/certificates/kube-proxy.key
+        - ../kubernetes/certificates/service-account.crt
+        - ../kubernetes/certificates/service-account.key
+      when: ansible_host in groups["_Master"]
+    - name: Copy Certificates to Worker nodes
+      copy:
+        src: "{{ item }}"
+        dest: "/var/lib/kubernetes/pki/"
+      loop:
+        - ../kubernetes/certificates/ca.crt
+        - ../kubernetes/certificates/etcd-ca.crt
+        - ../kubernetes/certificates/kube-proxy.crt
+        - ../kubernetes/certificates/kube-proxy.key
+      when: ansible_host in groups["_Worker"]
+
+
 
 #  rescue:
 #    - name: Remove repository (and clean up left-over metadata)

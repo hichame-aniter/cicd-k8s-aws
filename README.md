@@ -1,32 +1,37 @@
-# cicd-k8s-aws
-Deploy a k8s cluster and cicd pipeline using terraform, ansible on aws
+# CI/CD Kubenetes on AWS
+Deploying a kubernetes cluster and a cicd pipeline using terraform, ansible on aws
 
+## Steps
 
-Prerequisite:
+- Create Kubernetes Cluster
+    - Create EC2 instances on AWS using Terraform
+    - Configure VMs using Ansible
+- Create CI/CD Pipeline
 
-In bastion machine install the following:
+## Prerequisite
 
-Terraform 
-Ansible
-Kubctl
+1. In your bastion machine install the following:
 
-Option 1:
-Using run_all.sh (not recommanded unless you know what you are doing)
+    - [Terraform](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli) 
+    - [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
+    - [Kubctl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
 
-If [text](cluster-ip-list) is empty run:
+2. Make sure AWS credentials are configured at ~/.aws/credentials
 
-terraform apply
+## Deployment
 
-terraform output > cluster-ip-list
+### Infrastructure provisioning
 
-Option 2:
-Executing commands manually 
+Follow steps in [Terrafom](terraform/README.md)
 
-First: Infrastructure provisioning:
+### Infrastructure configuration
 
-Go to ./terrafom/README.md
+Follow to [Ansible](ansible/README.md)
 
-Second: Infrastructure initialization
-
-Go to ./ansible/README.md
-
+---
+### Run Everything at ounce
+I included all commands in a script that you can use 
+**not recommanded unless you know what you doing**
+```bash
+./run_all.sh
+```

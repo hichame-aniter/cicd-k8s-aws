@@ -12,6 +12,8 @@ variable "controlplane_list" {
 }
 variable "node_list" {
 }
+variable "loadbalancer_ip" {
+}
 variable "ami" {
     description = "OS Image"
     type = string

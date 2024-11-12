@@ -1,1 +1,0 @@
-rm *.crt *.key ca.srl

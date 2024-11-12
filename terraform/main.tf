@@ -229,3 +229,23 @@ resource "aws_ec2_instance_state" "cluster01_nodes" {
   instance_id = element(aws_instance.cluster01_nodes[*].id, count.index)
   state = var.instances_state
 }
+## Loadbalancer
+resource "aws_instance" "cluster01_lb" {
+	ami = var.ami
+	instance_type = var.instance_type
+	key_name = aws_key_pair.kp.key_name
+  subnet_id = aws_subnet.cluster01_public_subnets[0].id
+  private_ip = var.loadbalancer_ip
+	tags = {
+    	Name = "kubernetes-ha-lb" 
+      Project = var.project
+      Environment = var.environment
+      Role = "LoadBalancer"
+      Terraform = "true"
+  	}
+}
+# Turn off/on instances
+resource "aws_ec2_instance_state" "cluster01_lb" {
+  instance_id = aws_instance.cluster01_lb.id
+  state = var.instances_state
+}
