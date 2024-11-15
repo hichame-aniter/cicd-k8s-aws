@@ -9,5 +9,10 @@ terraform -chdir="$TERRAFORM_DIR" init
 
 terraform -chdir="$TERRAFORM_DIR" apply -auto-approve
 
-#Saving Public IP addresses in cluster-ip-list file
-#terraform -chdir="./terraform" output > cluster-ip-list
+# Update Public IP
+terraform plan -refresh-only
+
+#Saving Cluster Public IP 
+
+terraform -chdir="$TERRAFORM_DIR" output > cluster01-ip
+

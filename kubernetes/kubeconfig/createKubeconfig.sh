@@ -1,67 +1,52 @@
 # Global Var
 LOADBALANCER="192.168.56.30"
+CLUSTER_NAME="cluster01"
+CERT_DIR="/var/lib/kubernetes/pki"
 
-# Kubernetes Configuration File
+create_kubeconfig() {
+  COMPONENT=$1
+  SERVER=$2
+  KUBECONFIG_FILE="${COMPONENT}.kubeconfig"
+  CLIENT_CERT="${CERT_DIR}/${COMPONENT}.crt"
+  CLIENT_KEY="${CERT_DIR}/${COMPONENT}.key"
 
-## kube-proxy
-kubectl config set-cluster cluster01 \
-    --certificate-authority=/var/lib/kubernetes/pki/ca.crt \
-    --server=https://${LOADBALANCER}:6443 \
-    --kubeconfig=kube-proxy.kubeconfig
-kubectl config set-credentials system:kube-proxy \
-    --client-certificate=/var/lib/kubernetes/pki/kube-proxy.crt \
-    --client-key=/var/lib/kubernetes/pki/kube-proxy.key \
-    --kubeconfig=kube-proxy.kubeconfig
-kubectl config set-context default \
-    --cluster=cluster01 \
-    --user=system:kube-proxy \
-    --kubeconfig=kube-proxy.kubeconfig
-kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig
+  kubectl config set-cluster "${CLUSTER_NAME}" \
+      --certificate-authority="${CERT_DIR}/ca.crt" \
+      --server="${SERVER}" \
+      --kubeconfig="${KUBECONFIG_FILE}"
+  kubectl config set-credentials "system:${COMPONENT}" \
+      --client-certificate="${CLIENT_CERT}" \
+      --client-key="${CLIENT_KEY}" \
+      --kubeconfig="${KUBECONFIG_FILE}"
+  kubectl config set-context default \
+      --cluster="${CLUSTER_NAME}" \
+      --user="system:${COMPONENT}" \
+      --kubeconfig="${KUBECONFIG_FILE}"
+  kubectl config use-context default --kubeconfig="${KUBECONFIG_FILE}"
+}
 
-## kube-controller
-kubectl config set-cluster cluster01 \
-    --certificate-authority=/var/lib/kubernetes/pki/ca.crt \
-    --server=https://127.0.0.1:6443 \
-    --kubeconfig=kube-controller-manager.kubeconfig
-kubectl config set-credentials system:kube-controller-manager \
-    --client-certificate=/var/lib/kubernetes/pki/kube-controller-manager.crt \
-    --client-key=/var/lib/kubernetes/pki/kube-controller-manager.key \
-    --kubeconfig=kube-controller-manager.kubeconfig
-kubectl config set-context default \
-    --cluster=cluster01 \
-    --user=system:kube-controller-manager \
-    --kubeconfig=kube-controller-manager.kubeconfig
-kubectl config use-context default --kubeconfig=kube-controller-manager.kubeconfig
+# kube-proxy
+create_kubeconfig "kube-proxy" "https://${LOADBALANCER}:6443"
 
-## kube-scheduler
-kubectl config set-cluster cluster01 \
-    --certificate-authority=/var/lib/kubernetes/pki/ca.crt \
-    --server=https://127.0.0.1:6443 \
-    --kubeconfig=kube-scheduler.kubeconfig
-kubectl config set-credentials system:kube-scheduler \
-    --client-certificate=/var/lib/kubernetes/pki/kube-scheduler.crt \
-    --client-key=/var/lib/kubernetes/pki/kube-scheduler.key \
-    --kubeconfig=kube-scheduler.kubeconfig
-kubectl config set-context default \
-    --cluster=cluster01 \
-    --user=system:kube-scheduler \
-    --kubeconfig=kube-scheduler.kubeconfig
-kubectl config use-context default --kubeconfig=kube-scheduler.kubeconfig
+# kube-controller-manager
+create_kubeconfig "kube-controller-manager" "https://127.0.0.1:6443"
 
-## Admin
-kubectl config set-cluster cluster01 \
-    --certificate-authority=ca.crt \
+# kube-scheduler
+create_kubeconfig "kube-scheduler" "https://127.0.0.1:6443"
+
+# Admin (special case with different parameters)
+kubectl config set-cluster "${CLUSTER_NAME}" \
+    --certificate-authority=../certs/ca.crt \
     --embed-certs=true \
     --server=https://127.0.0.1:6443 \
     --kubeconfig=admin.kubeconfig
 kubectl config set-credentials admin \
-    --client-certificate=admin.crt \
-    --client-key=admin.key \
+    --client-certificate=../certs/admin.crt \
+    --client-key=../certs/admin.key \
     --embed-certs=true \
     --kubeconfig=admin.kubeconfig
 kubectl config set-context default \
-    --cluster=cluster01 \
+    --cluster="${CLUSTER_NAME}" \
     --user=admin \
     --kubeconfig=admin.kubeconfig
 kubectl config use-context default --kubeconfig=admin.kubeconfig
-

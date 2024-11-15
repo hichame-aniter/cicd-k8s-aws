@@ -10,7 +10,7 @@ resource "aws_key_pair" "kp" {
 }
 # Save the Key locally
 resource "local_file" "myKey" {
-  filename = "../ansible/myKey.pem"
+  filename = "../ansible/ssh_key.pem"
   content = tls_private_key.pk.private_key_pem
 }
 # Create VPC

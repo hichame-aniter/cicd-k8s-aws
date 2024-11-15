@@ -1,5 +1,5 @@
-# CI/CD Kubenetes on AWS
-Deploying a kubernetes cluster and a cicd pipeline using terraform, ansible on aws
+# CI/CD inside Kubernetes on AWS
+Deploying a kubernetes cluster on aws and a cicd pipeline inside it using terraform, ansible ans bash
 
 ## Steps
 
@@ -31,7 +31,7 @@ Follow to [Ansible](ansible/README.md)
 ---
 ### Run Everything at ounce
 I included all commands in a script that you can use 
-**not recommanded unless you know what you doing**
+(**not recommanded unless you know what you doing**)
 ```bash
 ./run_all.sh
 ```

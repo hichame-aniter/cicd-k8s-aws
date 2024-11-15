@@ -10,7 +10,7 @@ $HOME_DIR/terraform/terraform.sh
 
 # Securing myKey.pem
 
-chmod 400 $HOME_DIR/ansible/myKey.pem
+chmod 400 $HOME_DIR/ansible/ssh_key.pem
 
 # Launch Ansible
 
