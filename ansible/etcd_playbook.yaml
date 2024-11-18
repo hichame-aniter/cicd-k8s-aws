@@ -48,20 +48,26 @@
         src: "{{ item.src }}"
         dest: "{{ item.dest }}"
         force: true
-        mode: 0600
       loop: "{{ certs }}"
     - name: Create symbolic link
       ansible.builtin.file:
-        #src: "/var/lib/kubernetes/pki/etcd/etcd-ca.crt"
-        src: "/var/lib/kubernetes/pki/ca.crt"
+        src: "/var/lib/kubernetes/pki/etcd/etcd-ca.crt"
+        #src: "/var/lib/kubernetes/pki/ca.crt"
         dest: "/etc/etcd/ca.crt"
         state: link
     - name: Create Etcd Service
-      ansible.builtin.script:  files/createsEtcdService.sh "{{ tags.Name.split('-')[-1] }}" "{{ ansible_default_ipv4.address }}" "{{ hostvars[groups['_Master'][0]]['ansible_default_ipv4']['address'] }}" "{{ hostvars[groups['_Master'][1]]['ansible_default_ipv4']['address'] }}"
+      vars:
+        ETCD_NAME: "{{ tags.Name.split('-')[-1] }}"
+        PRIMARY_IP: "{{ ansible_default_ipv4.address }}"
+        CONTROL01: "{{ hostvars[groups['_Master'][0]]['ansible_default_ipv4']['address'] }}"
+        CONTROL01_NAME: "{{ hostvars[groups['_Master'][0]].tags.Name.split('-')[-1] }}"
+        CONTROL02: "{{ hostvars[groups['_Master'][1]]['ansible_default_ipv4']['address'] }}"
+        CONTROL02_NAME: "{{ hostvars[groups['_Master'][1]].tags.Name.split('-')[-1] }}"
+      ansible.builtin.script:  files/createsEtcdService.sh "{{ ETCD_NAME }}" "{{ PRIMARY_IP }}" "{{ CONTROL01 }}" "{{ CONTROL01_NAME }}" "{{ CONTROL02 }}" "{{ CONTROL02_NAME }}"
 
     - name: Start Etcd service
       ansible.builtin.service:
         name: etcd
         state: started
         enabled: true
-        daemon-reload: true
+        #daemon-reload: true

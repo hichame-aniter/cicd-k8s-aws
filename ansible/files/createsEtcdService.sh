@@ -1,7 +1,9 @@
 ETCD_NAME=$1
 PRIMARY_IP=$2
 CONTROL01=$3
-CONTROL02=$4
+CONTROL01_NAME=$4
+CONTROL02=$5
+CONTROL02_NAME=$6
 
 cat <<EOF | sudo tee /etc/systemd/system/etcd.service
 [Unit]
@@ -24,7 +26,7 @@ ExecStart=/usr/local/bin/etcd \\
   --listen-client-urls https://${PRIMARY_IP}:2379,https://127.0.0.1:2379 \\
   --advertise-client-urls https://${PRIMARY_IP}:2379 \\
   --initial-cluster-token etcd-cluster-0 \\
-  --initial-cluster controlplane01=https://${CONTROL01}:2380,controlplane02=https://${CONTROL02}:2380 \\
+  --initial-cluster ${CONTROL01_NAME}=https://${CONTROL01}:2380,${CONTROL02_NAME}=https://${CONTROL02}:2380 \\
   --initial-cluster-state new \\
   --data-dir=/var/lib/etcd
 Restart=on-failure
