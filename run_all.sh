@@ -12,6 +12,13 @@ $HOME_DIR/terraform/terraform.sh
 
 chmod 400 $HOME_DIR/ansible/ssh_key.pem
 
-# Launch Ansible
+# Create Certificates / Kubeconfig / EncryptionConfig
+
+./kubernetes/createCertificates.sh
+./kubernetes/createKubeconfig.sh
+./kubernetes/createEncryptionConfig.sh
+
+
+# Launch Ansible Playbooks
 
 $HOME_DIR/ansible/ansible.sh

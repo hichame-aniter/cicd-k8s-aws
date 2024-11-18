@@ -10,9 +10,9 @@ terraform -chdir="$TERRAFORM_DIR" init
 terraform -chdir="$TERRAFORM_DIR" apply -auto-approve
 
 # Update Public IP
-terraform plan -refresh-only
+terraform -chdir="$TERRAFORM_DIR" plan -refresh-only
 
 #Saving Cluster Public IP 
 
-terraform -chdir="$TERRAFORM_DIR" output > cluster01-ip
+terraform -chdir="$TERRAFORM_DIR" output > $TERRAFORM_DIR/cluster01-ip
 

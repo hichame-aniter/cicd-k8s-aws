@@ -1,46 +1,41 @@
 ---
 - name: Initialization
   hosts: k8s_cluster01
-  become: yes
+  become: true
   tasks:
     - name: Updates all paquets
-      dnf:
+      ansible.builtin.dnf:
         name: "*"
         state: latest
-        update_cache: yes
+        update_cache: true
     - name: Update the /etc/hosts file with node name
-      lineinfile:
+      ansible.builtin.lineinfile:
         dest: "/etc/hosts"
-        regexp: ".*\t{{ hostvars[item].tags.Name.split('-')[-1]}}\t{{ hostvars[item].tags.Name.split('-')[-1]}}"
-        line: "{{ hostvars[item]['ansible_default_ipv4']['address'] }}\t{{ hostvars[item].tags.Name.split('-')[-1]}}\t{{ hostvars[item].tags.Name.split('-')[-1]}}"
+        regexp: ".*\t{{ hostvars[item].tags.Name.split('-')[-1] }}\t{{ hostvars[item].tags.Name.split('-')[-1] }}"
+        line: "{{ hostvars[item]['ansible_default_ipv4']['address'] }}\t{{ hostvars[item].tags.Name.split('-')[-1] }}\t{{ hostvars[item].tags.Name.split('-')[-1] }}"
         state: present
-        backup: yes
-      with_items: "{{groups['k8s_cluster01']}}"
+        backup: true
+      with_items: "{{ groups['k8s_cluster01'] }}"
 
 - name: Master & Worker Nodes Configuration
   hosts: _Master, _Worker
-  become: yes
+  become: true
   vars:
     packages:
       - { name: yum-utils, state: latest }
       - { name: containerd.io, state: latest }
   tasks:
     - name: Add Docker repo
-      shell: yum-config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+      ansible.builtin.shell: yum-config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
       args:
-        creates: /etc/yum.repos.d/docker-ce.repo 
+        creates: /etc/yum.repos.d/docker-ce.repo
     - name: Install {{ item.name }} package
-      dnf:
+      ansible.builtin.dnf:
         name: "{{ item.name }}"
         state: "{{ item.state }}"
       loop: "{{ packages }}"
     - name: Start Containerd service
-      service:
+      ansible.builtin.service:
         name: containerd
         state: started
-        enabled: yes
-    - name: Create PKI directory
-      file:
-        path: /var/lib/kubernetes/pki/
-        state: absent
-    
+        enabled: true

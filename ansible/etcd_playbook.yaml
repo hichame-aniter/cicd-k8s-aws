@@ -1,0 +1,67 @@
+---
+- name: ETCD Installation
+  hosts: _Master
+  become: true
+  vars:
+    etcd_ver: "v3.5.17"
+    certs:
+      - { src: "../kubernetes/certs/etcd-server.crt", dest: "/etc/etcd/" }
+      - { src: "../kubernetes/certs/etcd-server.key", dest: "/etc/etcd/" }
+  tasks:
+    - name: Download ETCD
+      ansible.builtin.get_url:
+        url: https://github.com/etcd-io/etcd/releases/download/{{ etcd_ver }}/etcd-{{ etcd_ver }}-linux-amd64.tar.gz
+        dest: /tmp/etcd-{{ etcd_ver }}-linux-amd64.tar.gz
+        owner: root
+        group: root
+        mode: 0600
+        force: false
+    - name: Extract ETCD tar file
+      ansible.builtin.unarchive:
+        src: /tmp/etcd-{{ etcd_ver }}-linux-amd64.tar.gz
+        dest: /tmp/
+        owner: root
+        group: root
+        mode: 0600
+        remote_src: true
+
+    - name: move etcd and etcdctl to /usr/local/bin/
+      copy:
+        src: /tmp/etcd-{{ etcd_ver }}-linux-amd64/{{ item.name }}
+        dest: /usr/local/bin/
+        mode: 0700
+        remote_src: yes
+      loop:
+        - { name: etcd }
+        - { name: etcdctl }
+        - { name: etcdutl }
+    - name: remove etcd download file directory and .tar.gz in `/tmp` directory
+      file:
+        path: '/tmp/{{ item }}'
+        state: absent
+      loop:
+        - etcd-{{ etcd_ver }}-linux-amd64
+        - etcd-{{ etcd_ver }}-linux-amd64.tar.gz
+      tags: [ install_etcd ]
+    - name: Copy etcd certs to Master nodes
+      ansible.builtin.copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        force: true
+        mode: 0600
+      loop: "{{ certs }}"
+    - name: Create symbolic link
+      ansible.builtin.file:
+        #src: "/var/lib/kubernetes/pki/etcd/etcd-ca.crt"
+        src: "/var/lib/kubernetes/pki/ca.crt"
+        dest: "/etc/etcd/ca.crt"
+        state: link
+    - name: Create Etcd Service
+      ansible.builtin.script:  files/createsEtcdService.sh "{{ tags.Name.split('-')[-1] }}" "{{ ansible_default_ipv4.address }}" "{{ hostvars[groups['_Master'][0]]['ansible_default_ipv4']['address'] }}" "{{ hostvars[groups['_Master'][1]]['ansible_default_ipv4']['address'] }}"
+
+    - name: Start Etcd service
+      ansible.builtin.service:
+        name: etcd
+        state: started
+        enabled: true
+        daemon-reload: true

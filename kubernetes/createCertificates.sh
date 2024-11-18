@@ -2,8 +2,10 @@
 
 # Variables
 CA_DAYS=1000
-CERT_DIR="certs"
-mkdir -p $CERT_DIR
+BASE_DIR=$(dirname "$(realpath "$0")") # Chemin du script
+CERT_DIR="${BASE_DIR}/certs"           # Dossier pour les certificats
+CONFIG_DIR="${BASE_DIR}/openssl_configs"       # Dossier pour les fichiers de configuration
+mkdir -p "$CERT_DIR"
 
 # Function to create a Certificate Authority (CA)
 create_ca() {
@@ -22,23 +24,26 @@ generate_cert() {
   CONFIG_FILE=$4
 
   openssl genrsa -out "${CERT_DIR}/${NAME}.key" 2048
-  openssl req -new -key "${CERT_DIR}/${NAME}.key" -subj "$SUBJECT" -out "${CERT_DIR}/${NAME}.csr" ${CONFIG_FILE:+-config $CONFIG_FILE}
+  openssl req -new -key "${CERT_DIR}/${NAME}.key" -subj "$SUBJECT" -out "${CERT_DIR}/${NAME}.csr" ${CONFIG_FILE:+-config "${CONFIG_DIR}/${CONFIG_FILE}"}
   openssl x509 -req -in "${CERT_DIR}/${NAME}.csr" \
       -CA "${CERT_DIR}/${CA_NAME}.crt" -CAkey "${CERT_DIR}/${CA_NAME}.key" -CAcreateserial \
-      -out "${CERT_DIR}/${NAME}.crt" -days $CA_DAYS ${CONFIG_FILE:+-extensions v3_req -extfile $CONFIG_FILE}
+      -out "${CERT_DIR}/${NAME}.crt" -days $CA_DAYS ${CONFIG_FILE:+-extensions v3_req -extfile "${CONFIG_DIR}/${CONFIG_FILE}"}
   rm "${CERT_DIR}/${NAME}.csr"
 }
 
 # Create CA certificates
 create_ca "ca"
-create_ca "etcd-ca"
+#create_ca "etcd-ca"
 
 # Server certificates
 generate_cert "kube-apiserver" "ca" "/CN=kube-apiserver/O=Kubernetes" "openssl.cnf"
-generate_cert "etcd-server" "etcd-ca" "/CN=etcd-server/O=Kubernetes" "openssl-etcd.cnf"
+#generate_cert "etcd-server" "etcd-ca" "/CN=etcd-server/O=Kubernetes" "openssl-etcd.cnf"
+generate_cert "etcd-server" "ca" "/CN=etcd-server/O=Kubernetes" "openssl-etcd.cnf"
 
 # Client certificates
+#generate_cert "apiserver-etcd-client" "etcd-ca" "/CN=kube-apiserver-etcd-client/O=system:masters" "openssl-api-etcd.cnf"
 generate_cert "apiserver-etcd-client" "etcd-ca" "/CN=kube-apiserver-etcd-client/O=system:masters" "openssl-api-etcd.cnf"
+
 generate_cert "apiserver-kubelet-client" "ca" "/CN=kube-apiserver-kubelet-client/O=system:masters" "openssl-kubelet.cnf"
 generate_cert "kube-controller-manager" "ca" "/CN=system:kube-controller-manager/O=system:kube-controller-manager"
 generate_cert "kube-scheduler" "ca" "/CN=system:kube-scheduler/O=system:kube-scheduler"
@@ -48,3 +53,4 @@ generate_cert "service-account" "ca" "/CN=service-accounts/O=Kubernetes"
 
 # Output
 echo "All certificates are stored in the '$CERT_DIR' directory."
+echo "Config files are read from the '$CONFIG_DIR' directory."
