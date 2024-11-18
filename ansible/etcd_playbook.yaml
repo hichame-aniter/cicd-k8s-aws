@@ -51,8 +51,7 @@
       loop: "{{ certs }}"
     - name: Create symbolic link
       ansible.builtin.file:
-        src: "/var/lib/kubernetes/pki/etcd/etcd-ca.crt"
-        #src: "/var/lib/kubernetes/pki/ca.crt"
+        src: "/var/lib/kubernetes/pki/etcd-ca.crt"
         dest: "/etc/etcd/ca.crt"
         state: link
     - name: Create Etcd Service
@@ -63,11 +62,11 @@
         CONTROL01_NAME: "{{ hostvars[groups['_Master'][0]].tags.Name.split('-')[-1] }}"
         CONTROL02: "{{ hostvars[groups['_Master'][1]]['ansible_default_ipv4']['address'] }}"
         CONTROL02_NAME: "{{ hostvars[groups['_Master'][1]].tags.Name.split('-')[-1] }}"
-      ansible.builtin.script:  files/createsEtcdService.sh "{{ ETCD_NAME }}" "{{ PRIMARY_IP }}" "{{ CONTROL01 }}" "{{ CONTROL01_NAME }}" "{{ CONTROL02 }}" "{{ CONTROL02_NAME }}"
+      ansible.builtin.script:  files/create-etcd-service.sh "{{ ETCD_NAME }}" "{{ PRIMARY_IP }}" "{{ CONTROL01 }}" "{{ CONTROL01_NAME }}" "{{ CONTROL02 }}" "{{ CONTROL02_NAME }}"
 
     - name: Start Etcd service
       ansible.builtin.service:
         name: etcd
-        state: started
+        state: restarted
         enabled: true
-        #daemon-reload: true
+        daemon_reload: true

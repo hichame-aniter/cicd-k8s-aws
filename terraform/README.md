@@ -6,7 +6,7 @@ terraform init
 
 terraform apply
 
-chmod 400 ansible/myKey.pem
+chmod 400 ansible/ssh_key.pem
 ```
 ## Destroy everything
 ```bash

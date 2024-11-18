@@ -170,10 +170,16 @@ resource "aws_default_security_group" "cluster01_default_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
   # Allow SSH for Bastion Machine
-    ingress {
+  ingress {
     protocol = "tcp"
     to_port = 22
     from_port = 22
+    cidr_blocks = ["${chomp(data.http.myip.response_body)}/32"]
+  }
+  ingress {
+    protocol = "tcp"
+    to_port = 6443
+    from_port = 6443
     cidr_blocks = ["${chomp(data.http.myip.response_body)}/32"]
   }
   tags = {

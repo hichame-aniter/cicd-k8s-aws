@@ -19,14 +19,14 @@ openssl x509 -req -in etcd-ca.csr -signkey etcd-ca.key -CAcreateserial -out etcd
     -extensions v3_ca -extfile ca.cnf
 rm etcd-ca.csr
 
-## Server Certificates
-# API server endpoint Server certificate
-# openssl genrsa -out kube-apiserver.key 2048
-# openssl req -new -key kube-apiserver.key \
-#     -subj "/CN=kube-apiserver/O=Kubernetes" -out kube-apiserver.csr -config openssl.cnf
-# openssl x509 -req -in kube-apiserver.csr \
-#     -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-apiserver.crt -extensions v3_req -extfile openssl.cnf -days 1000
-# rm kube-apiserver.csr
+# Server Certificates
+#API server endpoint Server certificate
+openssl genrsa -out kube-apiserver.key 2048
+openssl req -new -key kube-apiserver.key \
+    -subj "/CN=kube-apiserver/O=Kubernetes" -out kube-apiserver.csr -config openssl.cnf
+openssl x509 -req -in kube-apiserver.csr \
+    -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-apiserver.crt -extensions v3_req -extfile openssl.cnf -days 1000
+rm kube-apiserver.csr
 
 
 # Etcd Server certificate  
@@ -43,30 +43,37 @@ rm etcd-server.csr
 
 ## Client Certificates
 # API server ETCD endpoint Client certificate (To communicate with ETCD)
+openssl genrsa -out apiserver-etcd-client.key 2048
+openssl req -new -key apiserver-etcd-client.key \
+    -subj "/CN=kube-apiserver-etcd-client/O=system:masters" -out apiserver-etcd-client.csr -config apiserver-etcd-client.cnf
+openssl x509 -req -in apiserver-etcd-client.csr \
+    -CA etcd-ca.crt -CAkey etcd-ca.key -CAcreateserial -out apiserver-etcd-client.crt -extensions v3_req -extfile apiserver-etcd-client.cnf -days 1000
+rm apiserver-etcd-client.csr
 
-# # API server KUBELET endpoint Client certificate (To communicate with Kubelet)
-# openssl genrsa -out apiserver-kubelet-client.key 2048
-# openssl req -new -key apiserver-kubelet-client.key \
-#     -subj "/CN=kube-apiserver-kubelet-client/O=system:masters" -out apiserver-kubelet-client.csr -config openssl-kubelet.cnf
-# openssl x509 -req -in apiserver-kubelet-client.csr \
-#     -CA ca.crt -CAkey ca.key -CAcreateserial -out apiserver-kubelet-client.crt -extensions v3_req -extfile openssl-kubelet.cnf -days 1000
-# rm apiserver-kubelet-client.csr
 
-# # Controller Manager Client Certificate (To communicate with API server)
-# openssl genrsa -out kube-controller-manager.key 2048
-# openssl req -new -key kube-controller-manager.key \
-#    -subj "/CN=system:kube-controller-manager/O=system:kube-controller-manager" \
-#    -out kube-controller-manager.csr
-# openssl x509 -req -in kube-controller-manager.csr \
-#     -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-controller-manager.crt -days 1000
-# rm kube-controller-manager.csr
+# API server KUBELET endpoint Client certificate (To communicate with Kubelet)
+openssl genrsa -out apiserver-kubelet-client.key 2048
+openssl req -new -key apiserver-kubelet-client.key \
+    -subj "/CN=kube-apiserver-kubelet-client/O=system:masters" -out apiserver-kubelet-client.csr -config apiserver-kubelet-client.cnf
+openssl x509 -req -in apiserver-kubelet-client.csr \
+    -CA ca.crt -CAkey ca.key -CAcreateserial -out apiserver-kubelet-client.crt -extensions v3_req -extfile apiserver-kubelet-client.cnf -days 1000
+rm apiserver-kubelet-client.csr
 
-# # Scheduler Client Certificate (To communicate with API server)
-# openssl genrsa -out kube-scheduler.key 2048
-# openssl req -new -key kube-scheduler.key \
-#     -subj "/CN=system:kube-scheduler/O=system:kube-scheduler" -out kube-scheduler.csr
-# openssl x509 -req -in kube-scheduler.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-scheduler.crt -days 1000
-# rm kube-scheduler.csr
+# Controller Manager Client Certificate (To communicate with API server)
+openssl genrsa -out kube-controller-manager.key 2048
+openssl req -new -key kube-controller-manager.key \
+   -subj "/CN=system:kube-controller-manager/O=system:kube-controller-manager" \
+   -out kube-controller-manager.csr
+openssl x509 -req -in kube-controller-manager.csr \
+    -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-controller-manager.crt -days 1000
+rm kube-controller-manager.csr
+
+# Scheduler Client Certificate (To communicate with API server)
+openssl genrsa -out kube-scheduler.key 2048
+openssl req -new -key kube-scheduler.key \
+    -subj "/CN=system:kube-scheduler/O=system:kube-scheduler" -out kube-scheduler.csr
+openssl x509 -req -in kube-scheduler.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-scheduler.crt -days 1000
+rm kube-scheduler.csr
 
 # # Kube Proxy Client Certificate (for each node)
 # openssl genrsa -out kube-proxy.key 2048
@@ -85,12 +92,12 @@ openssl x509 -req -in admin.csr \
    -CA ca.crt -CAkey ca.key -CAcreateserial -out admin.crt -days 1000
 rm admin.csr
 
-# # The Service Account Key Pair
-# openssl genrsa -out service-account.key 2048
-# openssl req -new -key service-account.key \
-#     -subj "/CN=service-accounts/O=Kubernetes" -out service-account.csr
-# openssl x509 -req -in service-account.csr \
-#     -CA ca.crt -CAkey ca.key -CAcreateserial -out service-account.crt -days 1000
-# rm service-account.csr
+# The Service Account Key Pair
+openssl genrsa -out service-account.key 2048
+openssl req -new -key service-account.key \
+    -subj "/CN=service-accounts/O=Kubernetes" -out service-account.csr
+openssl x509 -req -in service-account.csr \
+    -CA ca.crt -CAkey ca.key -CAcreateserial -out service-account.crt -days 1000
+rm service-account.csr
 
 # Front-proxy client certificate (Optional)

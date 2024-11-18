@@ -1,119 +1,81 @@
 ---
 - name: Master Nodes Configuration
   hosts: _Master
+  become: true
   vars:
     src_prefix: "../kubernetes/certs/"
     dest_prefix: "/var/lib/kubernetes/pki/"
     master_certs:
-      # - { src: "ca.crt", dest: "" }
-      # - { src: "ca.key", dest: "" }
-      - { src: "etcd-ca.crt", dest: "etcd/" }
+      - { src: "ca.crt", dest: "" }
+      - { src: "ca.key", dest: "" }
+      - { src: "etcd-ca.crt", dest: "" }
       # - { src: "etcd-ca.key", dest: "etcd/" }
-      # - { src: "kube-apiserver.crt", dest: "" }
-      # - { src: "kube-apiserver.key", dest: "" }
-      # - { src: "apiserver-kubelet-client.crt", dest: "" }
-      # - { src: "apiserver-kubelet-client.key", dest: "" }
-      # - { src: "kube-controller-manager.crt", dest: "" }
-      # - { src: "kube-controller-manager.key", dest: "" }
-      # - { src: "kube-scheduler.crt", dest: "" }
-      # - { src: "kube-scheduler.key", dest: "" }
+      - { src: "kube-apiserver.crt", dest: "" }
+      - { src: "kube-apiserver.key", dest: "" }
+      - { src: "apiserver-etcd-client.crt", dest: "" }
+      - { src: "apiserver-etcd-client.key", dest: "" }
+      - { src: "apiserver-kubelet-client.crt", dest: "" }
+      - { src: "apiserver-kubelet-client.key", dest: "" }
+      - { src: "kube-controller-manager.crt", dest: "" }
+      - { src: "kube-controller-manager.key", dest: "" }
+      - { src: "kube-scheduler.crt", dest: "" }
+      - { src: "kube-scheduler.key", dest: "" }
       # - { src: "etcd-server.crt", dest: "etcd/" }
       # - { src: "etcd-server.key", dest: "etcd/" }
       # - { src: "kube-proxy.crt", dest: "" }
       # - { src: "kube-proxy.key", dest: "" }
-      # - { src: "service-account.crt", dest: "" }
-      # - { src: "service-account.key", dest: "" }
+      - { src: "service-account.crt", dest: "" }
+      - { src: "service-account.key", dest: "" }
     master_kubeconfigs:
-      - { src: "../kubernetes/kubeconfig/kube-controller-manager.kubeconfig", dest: "~/kube-controller-manager.kubeconfig" }
-      - { src: "../kubernetes/kubeconfig/kube-scheduler.kubeconfig", dest: "~/kube-scheduler.kubeconfig" }
-    master_encryption_config:
-      - { src: "../kubernetes/encrypt/encryption-config.yaml", dest: "" }
+      - { src: "../kubernetes/kubeconfig/kube-controller-manager.kubeconfig", dest: "/var/lib/kubernetes/" }
+      - { src: "../kubernetes/kubeconfig/kube-scheduler.kubeconfig", dest: "/var/lib/kubernetes/" }
   tasks:
     - name: Copy certificates to Master nodes
-      become: true
-      block:
-        - name: Copy certificates to Master nodes
-          ansible.builtin.copy:
-            src: "{{ src_prefix }}{{ item.src }}"
-            dest: "{{ dest_prefix }}{{ item.dest }}"
-            force: true
-          loop: "{{ master_certs }}"
-      rescue:
-        - name: Remove certificates directory on failure
-          ansible.builtin.file:
-            path: "{{ dest_prefix }}"
-            state: absent
-
+      ansible.builtin.copy:
+        src: "{{ src_prefix }}{{ item.src }}"
+        dest: "{{ dest_prefix }}{{ item.dest }}"
+        force: true
+        mode: 0600
+      loop: "{{ master_certs }}"
     - name: Copy kubeconfig files to Master nodes
-      block:
-        - name: Copy kubeconfig files to Master nodes
-          ansible.builtin.copy:
-            src: "{{ item.src }}"
-            dest: "{{ item.dest }}"
-            force: true
-          loop: "{{ master_kubeconfigs }}"
-      rescue:
-        - name: Remove kubeconfig files on failure
-          ansible.builtin.file:
-            path: "{{ item.dest }}"
-            state: absent
-          loop: "{{ master_kubeconfigs }}"
+      ansible.builtin.copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        force: true
+        mode: 0600
+      loop: "{{ master_kubeconfigs }}"
     - name: Copy Encryption Config to Master nodes
-      become: true
-      block:
-        - name: Copy Encryption Config to Master nodes
-          ansible.builtin.copy:
-            src: "../kubernetes/encrypt/encryption-config.yaml"
-            dest: "/var/lib/kubernetes/pki/"
-            force: true
-      rescue:
-        - name: Remove Encryption Config directory on failure
-          ansible.builtin.file:
-            path: "/var/lib/kubernetes/pki/encryption-config.yaml"
-            state: absent
+      ansible.builtin.copy:
+        src: "../kubernetes/encrypt/encryption-config.yaml"
+        dest: "/var/lib/kubernetes/"
+        force: true
 
 # Play pour les Worker nodes
 - name: Worker Nodes Configuration
   hosts: _Worker
+  become: true
   vars:
     src_prefix: "../kubernetes/certs/"
     dest_prefix: "/var/lib/kubernetes/pki/"
     worker_certs:
-      # - { src: "ca.crt", dest: "" }
-      - { src: "etcd-ca.crt", dest: "etcd/" }
+      - { src: "ca.crt", dest: "" }
+      # - { src: "etcd-ca.crt", dest: "" }
       # - { src: "kube-proxy.crt", dest: "" }
       # - { src: "kube-proxy.key", dest: "" }
     worker_kubeconfigs:
-      - { src: "../kubernetes/kubeconfig/kube-proxy.kubeconfig", dest: "~/kube-proxy.kubeconfig" }
-
-  tasks:
+      - { src: "../kubernetes/kubeconfig/kube-proxy.kubeconfig", dest: "/var/lib/kubernetes/" }
+  tasks:    
     - name: Copy certificates to Worker nodes
-      become: true
-      block:
-        - name: Copy certificates to Worker nodes
-          ansible.builtin.copy:
-            src: "{{ src_prefix }}{{ item.src }}"
-            dest: "{{ dest_prefix }}{{ item.dest }}"
-            force: true
-            mode: 0600
-          loop: "{{ worker_certs }}"
-      rescue:
-        - name: Remove certificates directory on failure
-          ansible.builtin.file:
-            path: "{{ dest_prefix }}"
-            state: absent
-
-    - name: Copy kubeconfig files to Worker nodes
-      block:
-        - name: Copy kubeconfig files to Worker nodes
-          ansible.builtin.copy:
-            src: "{{ item.src }}"
-            dest: "{{ item.dest }}"
-            force: true
-          loop: "{{ worker_kubeconfigs }}"
-      rescue:
-        - name: Remove kubeconfig files on failure
-          ansible.builtin.file:
-            path: "{{ item.dest }}"
-            state: absent
-          loop: "{{ worker_kubeconfigs }}"
+      ansible.builtin.copy:
+        src: "{{ src_prefix }}{{ item.src }}"
+        dest: "{{ dest_prefix }}{{ item.dest }}"
+        force: true
+        mode: 0600
+      loop: "{{ worker_certs }}"
+    - name: Copy kubeconfig files to Worker nodes      
+      ansible.builtin.copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        force: true
+        mode: 0600
+      loop: "{{ worker_kubeconfigs }}"

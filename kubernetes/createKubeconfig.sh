@@ -14,28 +14,28 @@ create_kubeconfig() {
   kubectl config set-cluster "${CLUSTER_NAME}" \
       --certificate-authority="${CERT_DIR}/ca.crt" \
       --server="${SERVER}" \
-      --kubeconfig="${KUBECONFIG_FILE}"
+      --kubeconfig="${DEST_DIR}${KUBECONFIG_FILE}"
   kubectl config set-credentials "system:${COMPONENT}" \
       --client-certificate="${CLIENT_CERT}" \
       --client-key="${CLIENT_KEY}" \
-      --kubeconfig="${KUBECONFIG_FILE}"
+      --kubeconfig="${DEST_DIR}${KUBECONFIG_FILE}"
   kubectl config set-context default \
       --cluster="${CLUSTER_NAME}" \
       --user="system:${COMPONENT}" \
-      --kubeconfig="${KUBECONFIG_FILE}"
-  kubectl config use-context default --kubeconfig="${KUBECONFIG_FILE}"
+      --kubeconfig="${DEST_DIR}${KUBECONFIG_FILE}"
+  kubectl config use-context default --kubeconfig="${DEST_DIR}${KUBECONFIG_FILE}"
 }
 
 
 
 # kube-proxy
-create_kubeconfig "${DEST_DIR}kube-proxy" "https://${LOADBALANCER}:6443"
+create_kubeconfig "kube-proxy" "https://${LOADBALANCER}:6443"
 
 # kube-controller-manager
-create_kubeconfig "${DEST_DIR}kube-controller-manager" "https://127.0.0.1:6443"
+create_kubeconfig "kube-controller-manager" "https://127.0.0.1:6443"
 
 # kube-scheduler
-create_kubeconfig "${DEST_DIR}kube-scheduler" "https://127.0.0.1:6443"
+create_kubeconfig "kube-scheduler" "https://127.0.0.1:6443"
 
 # Admin (special case with different parameters)
 kubectl config set-cluster "${CLUSTER_NAME}" \
