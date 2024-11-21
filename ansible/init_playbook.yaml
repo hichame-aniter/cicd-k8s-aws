@@ -17,8 +17,8 @@
         backup: true
       with_items: "{{ groups['k8s_cluster01'] }}"
 
-- name: Master & Worker Nodes Configuration
-  hosts: _Master, _Worker
+- name: Worker Configuration
+  hosts: _Worker
   become: true
   vars:
     packages:
@@ -29,7 +29,7 @@
       ansible.builtin.shell: yum-config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
       args:
         creates: /etc/yum.repos.d/docker-ce.repo
-    - name: Install {{ item.name }} package
+    - name: "Install Master & Worker package"
       ansible.builtin.dnf:
         name: "{{ item.name }}"
         state: "{{ item.state }}"
@@ -39,3 +39,24 @@
         name: containerd
         state: started
         enabled: true
+- name: Loadbalancer Configuration
+  hosts: _LoadBalancer
+  become: true
+  tasks:
+    - name: "Install Loadbalancer package"
+      ansible.builtin.dnf:
+        name: haproxy
+        state: present
+    - name: "Configure HAProxy"
+      ansible.builtin.script:  files/create-haproxy.sh "192.168.56.30" "192.168.56.11" "controlplane01" "192.168.56.12" "controlplane02"
+    - name: Set haproxy_connect_any flag on and keep it persistent across reboots
+      ansible.posix.seboolean:
+        name: haproxy_connect_any
+        state: true
+        persistent: true
+    - name: Start HAProxy Service
+      ansible.builtin.service:
+        name: "haproxy"
+        state: restarted
+        enabled: true
+        daemon_reload: true

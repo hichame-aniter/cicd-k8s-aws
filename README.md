@@ -5,7 +5,7 @@ Deploying a kubernetes cluster on aws and a cicd pipeline inside it using terraf
 
 - Create Kubernetes Cluster
     - Create EC2 instances on AWS using Terraform
-    - Configure VMs using Ansible
+    - Deploying kubernetes using Ansible and Bash
 - Create CI/CD Pipeline
 
 ## Prerequisite

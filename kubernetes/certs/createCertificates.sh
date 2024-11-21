@@ -39,6 +39,16 @@ openssl x509 -req -in etcd-server.csr \
 rm etcd-server.csr
 
 # Kubelet Server certificates (for each node running kubelet)
+openssl genrsa -out node01.key 2048
+openssl req -new -key node01.key -subj "/CN=system:node:node01/O=system:nodes" -out node01.csr -config openssl-node01.cnf
+openssl x509 -req -in node01.csr -CA ca.crt -CAkey ca.key -CAcreateserial  -out node01.crt -extensions v3_req -extfile openssl-node01.cnf -days 1000
+rm node01.csr
+
+openssl genrsa -out node02.key 2048
+openssl req -new -key node02.key -subj "/CN=system:node:node02/O=system:nodes" -out node02.csr -config openssl-node02.cnf
+openssl x509 -req -in node02.csr -CA ca.crt -CAkey ca.key -CAcreateserial  -out node02.crt -extensions v3_req -extfile openssl-node02.cnf -days 1000
+rm node02.csr
+
 # Front-proxy server certificate (Optional)
 
 ## Client Certificates
@@ -75,13 +85,13 @@ openssl req -new -key kube-scheduler.key \
 openssl x509 -req -in kube-scheduler.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-scheduler.crt -days 1000
 rm kube-scheduler.csr
 
-# # Kube Proxy Client Certificate (for each node)
-# openssl genrsa -out kube-proxy.key 2048
-# openssl req -new -key kube-proxy.key \
-#     -subj "/CN=system:kube-proxy/O=system:node-proxier" -out kube-proxy.csr
-# openssl x509 -req -in kube-proxy.csr \
-#     -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-proxy.crt -days 1000
-# rm kube-proxy.csr
+# Kube Proxy Client Certificate (for each node)
+openssl genrsa -out kube-proxy.key 2048
+openssl req -new -key kube-proxy.key \
+    -subj "/CN=system:kube-proxy/O=system:node-proxier" -out kube-proxy.csr
+openssl x509 -req -in kube-proxy.csr \
+    -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-proxy.crt -days 1000
+rm kube-proxy.csr
 
 # Admin Client Certificate (Optional)
 openssl genrsa -out admin.key 2048

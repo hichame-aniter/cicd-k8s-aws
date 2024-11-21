@@ -34,21 +34,21 @@
       ansible.builtin.copy:
         src: "{{ src_prefix }}{{ item.src }}"
         dest: "{{ dest_prefix }}{{ item.dest }}"
-        force: true
+        force: false
         mode: 0600
       loop: "{{ master_certs }}"
     - name: Copy kubeconfig files to Master nodes
       ansible.builtin.copy:
         src: "{{ item.src }}"
         dest: "{{ item.dest }}"
-        force: true
+        force: false
         mode: 0600
       loop: "{{ master_kubeconfigs }}"
     - name: Copy Encryption Config to Master nodes
       ansible.builtin.copy:
         src: "../kubernetes/encrypt/encryption-config.yaml"
         dest: "/var/lib/kubernetes/"
-        force: true
+        force: false
 
 # Play pour les Worker nodes
 - name: Worker Nodes Configuration
@@ -57,25 +57,29 @@
   vars:
     src_prefix: "../kubernetes/certs/"
     dest_prefix: "/var/lib/kubernetes/pki/"
+    node_name: "{{ tags.Name.split('-')[-1] }}"
     worker_certs:
       - { src: "ca.crt", dest: "" }
+      - { src: "{{ node_name }}.crt", dest: }
+      - { src: "{{ node_name }}.key", dest: }
       # - { src: "etcd-ca.crt", dest: "" }
-      # - { src: "kube-proxy.crt", dest: "" }
-      # - { src: "kube-proxy.key", dest: "" }
+      - { src: "kube-proxy.crt", dest: "" }
+      - { src: "kube-proxy.key", dest: "" }
     worker_kubeconfigs:
-      - { src: "../kubernetes/kubeconfig/kube-proxy.kubeconfig", dest: "/var/lib/kubernetes/" }
-  tasks:    
+      - { src: "../kubernetes/kubeconfig/kube-proxy.kubeconfig", dest: "/var/lib/kube-proxy/" }
+      - { src: "../kubernetes/kubeconfig/{{ node_name }}.kubeconfig", dest: "/var/lib/kubelet/kubelet.kubeconfig" }
+  tasks:
     - name: Copy certificates to Worker nodes
       ansible.builtin.copy:
         src: "{{ src_prefix }}{{ item.src }}"
         dest: "{{ dest_prefix }}{{ item.dest }}"
-        force: true
+        force: false
         mode: 0600
       loop: "{{ worker_certs }}"
     - name: Copy kubeconfig files to Worker nodes      
       ansible.builtin.copy:
         src: "{{ item.src }}"
         dest: "{{ item.dest }}"
-        force: true
+        force: false
         mode: 0600
       loop: "{{ worker_kubeconfigs }}"
